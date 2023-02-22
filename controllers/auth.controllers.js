@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import User from '../models/user';
 import asyncHandler from '../services/asyncHandler';
 import CustomError from '../utils/CustomError';
@@ -141,7 +142,7 @@ export const logout = asyncHandler(async (_req, res) => {
 /**
  * @FORGOT_PASSWORD
  * @request_type PUT
- * @route http://localhost:4000/api/v1/auth/forgot/password
+ * @route http://localhost:4000/api/v1/auth/password/forgot
  * @description Controller which sends reset password email to the user
  * @parameters email
  * @returns Response object
@@ -172,7 +173,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const resetPasswordToken = user.generateForgotPasswordToken();
   await user.save({ validateBeforeSave: true });
 
-  const resetPasswordLink = `${req.protocol}://${req.hostname}/api/v1/auth/reset/password/${resetPasswordToken}`;
+  const resetPasswordLink = `${req.protocol}://${req.hostname}/api/v1/auth/password/reset/${resetPasswordToken}`;
 
   try {
     await mailSender({
@@ -197,7 +198,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 /**
  * @RESET_PASSWORD
  * @request_type PUT
- * @route http://localhost:4000/api/v1/auth/reset/password/:resetPasswordToken
+ * @route http://localhost:4000/api/v1/auth/password/reset/:resetPasswordToken
  * @description Controller that allows user to reset his password
  * @parameters password, confirmPassword
  * @returns Response object
@@ -234,5 +235,86 @@ export const resetPassword = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: 'Password reset success',
+  });
+});
+
+/**
+ * @GET_PROFILE
+ * @request_type GET
+ * @route http://localhost:4000/api/v1/auth/profile
+ * @description Controller that allows user to fetch his profile
+ * @parameters none
+ * @returns User object
+ */
+
+export const getProfile = asyncHandler(async (_req, res) => {
+  const { user } = res;
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile successfully fetched',
+    user,
+  });
+});
+
+/**
+ * @CHANGE_PASSWORD
+ * @request_type PUT
+ * @route http://localhost:4000/api/v1/auth/password/change
+ * @description Controller that allows user to change his password
+ * @parameters password, newPassword
+ * @returns Response object
+ */
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { password, newPassword } = req.body;
+
+  if (!(password && newPassword)) {
+    throw new CustomError('Please enter all the details', 401);
+  }
+
+  let user = await User.findById(res.user._id).select('+password');
+
+  const passwordMatched = await user.comparePassword(password);
+
+  if (!passwordMatched) {
+    throw new CustomError('Incorrect password', 401);
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.status(201).json({
+    success: true,
+    message: 'Password successfully changed',
+  });
+});
+
+/**
+ * @DELETE_PROFILE
+ * @request_type DELETE
+ * @route http://localhost:4000/api/v1/auth/profile/delete
+ * @description Controller that allows user to delete his profile
+ * @parameters password
+ * @returns Response object
+ */
+
+export const deleteProfile = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    throw new CustomError('Please enter your password', 401);
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await User.findOneAndDelete({ _id: res.user._id, password: hashedPassword });
+
+  if (!user) {
+    throw new CustomError('Incorrect password', 401);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile deleted successfully',
   });
 });
