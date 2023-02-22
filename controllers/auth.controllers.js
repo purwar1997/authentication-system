@@ -1,8 +1,10 @@
+import crypto from 'crypto';
 import User from '../models/user';
 import asyncHandler from '../services/asyncHandler';
 import CustomError from '../utils/CustomError';
 import { validateEmail, validatePhoneNo } from '../services/validators';
 import mailSender from '../services/mailSender';
+import regexp from '../utils/regex';
 
 /**
  * @SIGNUP
@@ -72,42 +74,34 @@ export const signup = asyncHandler(async (req, res) => {
  */
 
 export const login = asyncHandler(async (req, res) => {
-  const { login, password } = req.body;
+  let { login, password } = req.body;
 
   if (!(login && password)) {
     throw new CustomError('Please enter all the details', 401);
   }
 
-  let isEmailValid, isPhoneNoValid;
+  login = login.trim().toLowerCase();
 
-  try {
-    isEmailValid = await validateEmail(login);
-  } catch (err) {
-    throw new CustomError('Failure verifying email', 500);
+  let regex = new RegExp(regexp.email);
+  let isLoginValid = regex.test(login);
+
+  if (!isLoginValid) {
+    regex = new RegExp(regexp.phoneNo);
+    isLoginValid = regex.test(login);
   }
 
-  try {
-    isPhoneNoValid = await validatePhoneNo(login);
-  } catch (err) {
-    throw new CustomError('Failure verifying phone no.', 500);
-  }
-
-  if (!(isEmailValid || isPhoneNoValid)) {
+  if (!isLoginValid) {
     throw new CustomError('Please enter valid email or phone no.', 401);
   }
 
-  let user;
+  let user = await User.findOne({ email: login }).select('+password');
 
-  if (isEmailValid) {
-    user = await User.findOne({ email: login.toLowerCase() }).select('+password');
-  }
-
-  if (isPhoneNoValid) {
+  if (!user) {
     user = await User.findOne({ phoneNo: login }).select('+password');
   }
 
   if (!user) {
-    throw new CustomError('User not registered', 401);
+    throw new CustomError('User not registered', 404);
   }
 
   const passwordMatched = await user.comparePassword(password);
@@ -141,5 +135,104 @@ export const logout = asyncHandler(async (_req, res) => {
   res.status(200).json({
     success: true,
     message: 'User successfully logged out',
+  });
+});
+
+/**
+ * @FORGOT_PASSWORD
+ * @request_type PUT
+ * @route http://localhost:4000/api/v1/auth/forgot/password
+ * @description Controller which sends reset password email to the user
+ * @parameters email
+ * @returns Response object
+ */
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  let { email } = req.body;
+
+  if (!email) {
+    throw new CustomError('Email is required', 401);
+  }
+
+  email = email.trim().toLowerCase();
+
+  const regex = new RegExp(regexp.email);
+  const isEmailValid = regex.test(email);
+
+  if (!isEmailValid) {
+    throw new CustomError('Please enter a valid email', 401);
+  }
+
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    throw new CustomError('Email not registered', 404);
+  }
+
+  const resetPasswordToken = user.generateForgotPasswordToken();
+  await user.save({ validateBeforeSave: true });
+
+  const resetPasswordLink = `${req.protocol}://${req.hostname}/api/v1/auth/reset/password/${resetPasswordToken}`;
+
+  try {
+    await mailSender({
+      email,
+      subject: 'Reset password email',
+      text: `Click on this link to reset your password: ${resetPasswordLink}`,
+    });
+  } catch (err) {
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordExpiry = undefined;
+    await user.save({ validateBeforeSave: true });
+
+    throw new CustomError(err.message || 'Failure sending mail', 500);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Reset password email successfully sent to the user',
+  });
+});
+
+/**
+ * @RESET_PASSWORD
+ * @request_type PUT
+ * @route http://localhost:4000/api/v1/auth/reset/password/:resetPasswordToken
+ * @description Controller that allows user to reset his password
+ * @parameters password, confirmPassword
+ * @returns Response object
+ */
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { resetPasswordToken } = req.params;
+  const { password, confirmPassword } = req.body;
+
+  if (!(password && confirmPassword)) {
+    throw new CustomError('Please enter all the details', 401);
+  }
+
+  if (password !== confirmPassword) {
+    throw new CustomError("Password and confirmed password don't match", 401);
+  }
+
+  const encryptedToken = crypto.createHash('sha256').update(resetPasswordToken).digest('hex');
+
+  const user = await User.findOne({
+    forgotPasswordToken: encryptedToken,
+    forgotPasswordExpiry: { $gt: new Date() },
+  });
+
+  if (!user) {
+    throw new CustomError('Token invalid or expired', 401);
+  }
+
+  user.password = password;
+  user.forgotPasswordToken = undefined;
+  user.forgotPasswordExpiry = undefined;
+  await user.save();
+
+  res.status(201).json({
+    success: true,
+    message: 'Password reset success',
   });
 });
