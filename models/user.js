@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import JWT from 'jsonwebtoken';
 import crypto from 'crypto';
-import regexp from '../utils/regex';
-import config from '../config/config';
+import regexp from '../utils/regex.js';
+import config from '../config/config.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -76,7 +76,7 @@ userSchema.pre('save', async function (next) {
 
 userSchema.methods = {
   comparePassword: async function (password) {
-    return await bcrypt.compare(this.password, password);
+    return await bcrypt.compare(password, this.password);
   },
 
   generateJWTtoken: function () {

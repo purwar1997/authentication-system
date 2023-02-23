@@ -1,8 +1,8 @@
 import JWT from 'jsonwebtoken';
-import User from '../models/user';
-import asyncHandler from '../services/asyncHandler';
-import CustomError from '../utils/CustomError';
-import config from '../config/config';
+import User from '../models/user.js';
+import asyncHandler from '../services/asyncHandler.js';
+import CustomError from '../utils/CustomError.js';
+import config from '../config/config.js';
 
 const auth = asyncHandler(async (req, res, next) => {
   let token;

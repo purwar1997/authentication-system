@@ -1,5 +1,5 @@
-import transporter from '../config/transporter.config';
-import config from '../config/config';
+import transporter from '../config/transporter.config.js';
+import config from '../config/config.js';
 
 const mailSender = async options => {
   return await transporter.sendMail({

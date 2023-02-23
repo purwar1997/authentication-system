@@ -9,9 +9,9 @@ import {
   changePassword,
   getProfile,
   deleteProfile,
-} from '../controllers/auth.controllers';
+} from '../controllers/auth.controllers.js';
 
-import {} from '../middlewares/auth';
+import auth from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.get('/api/v1/auth/logout', logout);
 router.put('/api/v1/auth/password/forgot', forgotPassword);
 router.put('/api/v1/auth/password/reset', resetPassword);
 router.put('/api/v1/auth/password/change', auth, changePassword);
-router.get('/api/v1/auth/profile'.auth, getProfile);
+router.get('/api/v1/auth/profile', auth, getProfile);
 router.delete('/api/v1/auth/profile/delete', auth, deleteProfile);
 
 export default router;

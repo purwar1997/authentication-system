@@ -1,5 +1,5 @@
 import axios from 'axios';
-import config from '../config/config';
+import config from '../config/config.js';
 
 export const validateEmail = async email => {
   const res = await axios.get(

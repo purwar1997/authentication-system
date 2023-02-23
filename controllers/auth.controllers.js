@@ -1,11 +1,11 @@
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
-import User from '../models/user';
-import asyncHandler from '../services/asyncHandler';
-import CustomError from '../utils/CustomError';
-import { validateEmail, validatePhoneNo } from '../services/validators';
-import mailSender from '../services/mailSender';
-import regexp from '../utils/regex';
+import User from '../models/user.js';
+import asyncHandler from '../services/asyncHandler.js';
+import CustomError from '../utils/CustomError.js';
+import { validateEmail, validatePhoneNo } from '../services/validators.js';
+import mailSender from '../services/mailSender.js';
+import regexp from '../utils/regex.js';
+import cookieOptions from '../utils/cookieOptions.js';
 
 /**
  * @SIGNUP
@@ -306,15 +306,19 @@ export const deleteProfile = asyncHandler(async (req, res) => {
     throw new CustomError('Please enter your password', 401);
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.findOneAndDelete({ _id: res.user._id, password: hashedPassword });
+  const user = await User.findById(res.user._id).select('+password');
+  const passwordMatched = await user.comparePassword(password);
 
-  if (!user) {
+  if (!passwordMatched) {
     throw new CustomError('Incorrect password', 401);
   }
 
+  await user.remove();
+
+  res.status(200).cookie('token', null, cookieOptions);
+
   res.status(200).json({
     success: true,
-    message: 'Profile deleted successfully',
+    message: 'Profile successfully deleted',
   });
 });
