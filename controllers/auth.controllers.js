@@ -28,7 +28,7 @@ export const signup = asyncHandler(async (req, res) => {
   try {
     isEmailValid = await validateEmail(email);
   } catch (err) {
-    throw new CustomError('Failure verifying email', 500);
+    throw new CustomError(err.response.data.error.message || 'Failure verifying email', 500);
   }
 
   if (!isEmailValid) {
@@ -38,7 +38,7 @@ export const signup = asyncHandler(async (req, res) => {
   try {
     isPhoneNoValid = await validatePhoneNo(phoneNo);
   } catch (err) {
-    throw new CustomError('Failure verifying phone no.', 500);
+    throw new CustomError(err.response.data.error.message || 'Failure verifying phone no.', 500);
   }
 
   if (!isPhoneNoValid) {
@@ -46,10 +46,10 @@ export const signup = asyncHandler(async (req, res) => {
   }
 
   if (password !== confirmPassword) {
-    throw new CustomError("Password and confirmed password don't match", 401);
+    throw new CustomError("Password and confirmed password don't match with each other", 401);
   }
 
-  let user = await User.findOne({ email: email.toLowerCase() });
+  let user = await User.findOne({ email: email.trim().toLowerCase() });
 
   if (user) {
     throw new CustomError('User already exists', 401);
@@ -77,8 +77,12 @@ export const signup = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   let { login, password } = req.body;
 
-  if (!(login && password)) {
-    throw new CustomError('Please enter all the details', 401);
+  if (!login) {
+    throw new CustomError('Email or phone no. is required', 401);
+  }
+
+  if (!password) {
+    throw new CustomError('Password is required', 401);
   }
 
   login = login.trim().toLowerCase();
@@ -152,7 +156,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   let { email } = req.body;
 
   if (!email) {
-    throw new CustomError('Email is required', 401);
+    throw new CustomError('Please enter your email', 401);
   }
 
   email = email.trim().toLowerCase();
@@ -208,12 +212,16 @@ export const resetPassword = asyncHandler(async (req, res) => {
   const { resetPasswordToken } = req.params;
   const { password, confirmPassword } = req.body;
 
-  if (!(password && confirmPassword)) {
-    throw new CustomError('Please enter all the details', 401);
+  if (!password) {
+    throw new CustomError('Please enter a new password', 401);
+  }
+
+  if (!confirmPassword) {
+    throw new CustomError('Please confirm your password', 401);
   }
 
   if (password !== confirmPassword) {
-    throw new CustomError("Password and confirmed password don't match", 401);
+    throw new CustomError("Password and confirmed password don't match with each other", 401);
   }
 
   const encryptedToken = crypto.createHash('sha256').update(resetPasswordToken).digest('hex');
@@ -262,20 +270,24 @@ export const getProfile = asyncHandler(async (_req, res) => {
  * @request_type PUT
  * @route http://localhost:4000/api/v1/auth/password/change
  * @description Controller that allows user to change his password
- * @parameters password, newPassword
+ * @parameters currentPassword, newPassword
  * @returns Response object
  */
 
 export const changePassword = asyncHandler(async (req, res) => {
-  const { password, newPassword } = req.body;
+  const { currentPassword, newPassword } = req.body;
 
-  if (!(password && newPassword)) {
-    throw new CustomError('Please enter all the details', 401);
+  if (!currentPassword) {
+    throw new CustomError('Please enter your current password', 401);
+  }
+
+  if (!newPassword) {
+    throw new CustomError('Please enter a new password', 401);
   }
 
   let user = await User.findById(res.user._id).select('+password');
 
-  const passwordMatched = await user.comparePassword(password);
+  const passwordMatched = await user.comparePassword(currentPassword);
 
   if (!passwordMatched) {
     throw new CustomError('Incorrect password', 401);
