@@ -128,7 +128,7 @@ export const login = asyncHandler(async (req, res) => {
 /**
  * @LOGOUT
  * @request_type GET
- * @route https://localhost:4000/api/v1/auth/logout
+ * @route http://localhost:4000/api/v1/auth/logout
  * @description Controller that allows user to logout
  * @parameters none
  * @returns Response object

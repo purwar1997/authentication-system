@@ -8,7 +8,7 @@ info:
     email: shubhampurwar35@gmail.com
 
 servers:
-  - url: http://localhost:4000/api/v1
+  - url: http://localhost:4000/api/v1/auth
     description: Development server
   - url:
     description: Production server
@@ -84,13 +84,13 @@ components:
             $ref: '#components/schemas/Error'
 
 paths:
-  /auth/signup:
+  /signup:
     post:
       tags:
         - Authentication routes
       description: Allows user to signup
       requestBody:
-        description: A JSON object containing values provided by user to signup
+        description: A JSON object containing values provided by user for signup
         required: true
         content:
           application/json:
@@ -129,13 +129,13 @@ paths:
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /auth/login:
+  /login:
     post:
       tags:
         - Authentication routes
       description: Allows user to login
       requestBody:
-        description: A JSON object containing values provided by user to login
+        description: A JSON object containing values provided by user for login
         required: true
         content:
           application/json:
@@ -158,9 +158,9 @@ paths:
                 $ref: '#/components/schemas/Response'
           headers:
             Set-Cookie:
+              description: Cookie information
               schema:
                 type: string
-                description: Cookie information
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
@@ -168,7 +168,7 @@ paths:
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /auth/logout:
+  /logout:
     get:
       tags:
         - Authentication routes
@@ -184,13 +184,13 @@ paths:
                 $ref: '#/components/schemas/Response'
           headers:
             Set-Cookie:
+              description: Cookie information
               schema:
                 type: string
-                description: Cookie information
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /auth/password/forgot:
+  /password/forgot:
     put:
       tags:
         - Authentication routes
@@ -219,7 +219,7 @@ paths:
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /auth/password/reset/{resetPasswordToken}:
+  /password/reset/{resetPasswordToken}:
     put:
       tags:
         - Authentication routes
@@ -256,14 +256,14 @@ paths:
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /auth/profile:
+  /profile:
     get:
       tags:
         - Authentication routes
-      description: Allows user to access profile
+      description: Allows user to access his profile
       security:
-        - BearerAuth
-        - CookieAuth
+        - BearerAuth: []
+        - CookieAuth: []
       responses:
         '200':
           description: Profile successfully fetched
@@ -284,14 +284,14 @@ paths:
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /auth/password/change:
+  /password/change:
     put:
       tags:
         - Authentication routes
       description: Allows user to change password
       security:
-        - BearerAuth
-        - CookieAuth
+        - BearerAuth: []
+        - CookieAuth: []
       requestBody:
         description: A JSON object containing currentPassword and newPassword
         required: true
@@ -313,17 +313,19 @@ paths:
                 $ref: '#/components/schemas/Response'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /auth/profile/delete:
+  /profile/delete:
     delete:
       tags:
         - Authentication routes
-      description: Allows user to delete profile
+      description: Allows user to delete his profile
       security:
-        - BearerAuth
-        - CookieAuth
+        - BearerAuth: []
+        - CookieAuth: []
       requestBody:
         description: A JSON object containing password
         required: true
@@ -332,7 +334,8 @@ paths:
             schema:
               type: object
               properties:
-                password: string
+                password:
+                  type: string
       responses:
         '200':
           description: Profile successfully deleted
@@ -340,7 +343,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+          headers:
+            Set-Cookie:
+              description: Cookie information
+              schema:
+                type: string
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/UnexpectedError'

@@ -13,7 +13,7 @@ import config from './config/config.js';
     console.log(`Database connection success: ${res.connection.host}`);
 
     app.listen(config.PORT, () =>
-      console.log(`Server is running on https://localhost:${config.PORT}`)
+      console.log(`Server is running on http://localhost:${config.PORT}`)
     );
   } catch (err) {
     console.log('Database connection failure');
