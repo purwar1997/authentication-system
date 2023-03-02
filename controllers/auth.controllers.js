@@ -67,7 +67,7 @@ export const signup = asyncHandler(async (req, res) => {
 
 /**
  * @LOGIN
- * @request_type GET
+ * @request_type POST
  * @route http://localhost:4000/api/v1/auth/login
  * @description Controller that allows user to login via email or phone no.
  * @parameters login, password

@@ -8,7 +8,7 @@ info:
     email: shubhampurwar35@gmail.com
 
 servers:
-  - url: https://localhost:4000/api/v1
+  - url: http://localhost:4000/api/v1
     description: Development server
   - url:
     description: Production server
@@ -84,8 +84,10 @@ components:
             $ref: '#components/schemas/Error'
 
 paths:
-  /signup:
+  /auth/signup:
     post:
+      tags:
+        - Authentication routes
       description: Allows user to signup
       requestBody:
         description: A JSON object containing values provided by user to signup
@@ -127,8 +129,10 @@ paths:
         '500':
           $ref: '#/components/responses/UnexpectedError'
 
-  /login:
-    get:
+  /auth/login:
+    post:
+      tags:
+        - Authentication routes
       description: Allows user to login
       requestBody:
         description: A JSON object containing values provided by user to login
@@ -156,15 +160,18 @@ paths:
             Set-Cookie:
               schema:
                 type: string
+                description: Cookie information
         '401':
-          $ref: '#/components/schemas/UnauthorizedError'
+          $ref: '#/components/responses/UnauthorizedError'
         '404':
-          $ref: '#/components/schemas/NotFoundError'
+          $ref: '#/components/responses/NotFoundError'
         '500':
-          $ref: '#/components/schemas/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedError'
 
-  /logout:
+  /auth/logout:
     get:
+      tags:
+        - Authentication routes
       description: Allows user to logout
       responses:
         '200':
@@ -179,5 +186,161 @@ paths:
             Set-Cookie:
               schema:
                 type: string
+                description: Cookie information
         '500':
-          $ref: '#/components/schemas/UnexpectedError'
+          $ref: '#/components/responses/UnexpectedError'
+
+  /auth/password/forgot:
+    put:
+      tags:
+        - Authentication routes
+      description: Sends reset password mail to the user
+      requestBody:
+        description: A JSON object containing user email
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Mail with link to reset password is successfully sent to the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/UnexpectedError'
+
+  /auth/password/reset/{resetPasswordToken}:
+    put:
+      tags:
+        - Authentication routes
+      description: Allows user to reset password
+      parameters:
+        - name: resetPasswordToken
+          in: path
+          description: Token to reset password
+          required: true
+          schema:
+            type: string
+            format: hex
+      requestBody:
+        description: A JSON object containing password and confirmPassword
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                confirmPassword:
+                  type: string
+      responses:
+        '201':
+          description: Password reset success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/UnexpectedError'
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication routes
+      description: Allows user to access profile
+      security:
+        - BearerAuth
+        - CookieAuth
+      responses:
+        '200':
+          description: Profile successfully fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    default: true
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/UnexpectedError'
+
+  /auth/password/change:
+    put:
+      tags:
+        - Authentication routes
+      description: Allows user to change password
+      security:
+        - BearerAuth
+        - CookieAuth
+      requestBody:
+        description: A JSON object containing currentPassword and newPassword
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '201':
+          description: Password successfully changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/UnexpectedError'
+
+  /auth/profile/delete:
+    delete:
+      tags:
+        - Authentication routes
+      description: Allows user to delete profile
+      security:
+        - BearerAuth
+        - CookieAuth
+      requestBody:
+        description: A JSON object containing password
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password: string
+      responses:
+        '200':
+          description: Profile successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/UnexpectedError'
