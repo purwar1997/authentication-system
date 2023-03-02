@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://localhost:4000/api/v1/auth
     description: Development server
-  - url:
+  - url: https://authentication-system-gf5i.onrender.com/api/v1/auth
     description: Production server
 
 components:

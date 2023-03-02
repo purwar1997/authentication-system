@@ -11,7 +11,7 @@ const app = express();
 const data = fs.readFileSync('./swagger.yaml', { encoding: 'utf-8' });
 const swaggerDocument = YAML.parse(data);
 const options = { customCss: '.swagger-ui .topbar { display: none }' };
-const corsOptions = { origin: ['https://localhost:4000/api-docs'] };
+const corsOptions = { origin: 'https://authentication-system-gf5i.onrender.com/api-docs' };
 
 app.use(express.json());
 app.use(cookieParser());
