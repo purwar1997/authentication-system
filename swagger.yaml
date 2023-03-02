@@ -63,21 +63,21 @@ components:
 
   responses:
     UnauthorizedError:
-      description: Client unauthorized
+      description: Authorization information is missing or invalid
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
 
     NotFoundError:
-      description: Resource not found
+      description: User not found
       content:
         application/json:
           schema:
             $ref: '#components/schemas/Error'
 
-    InternalServerError:
-      description: Internal server error
+    UnexpectedError:
+      description: Unexpected Error
       content:
         application/json:
           schema:
@@ -109,7 +109,7 @@ paths:
                   type: string
       responses:
         '201':
-          description: Resource created
+          description: Signup success
           content:
             application/json:
               schema:
@@ -125,4 +125,59 @@ paths:
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          $ref: '#/components/responses/UnexpectedError'
+
+  /login:
+    get:
+      description: Allows user to login
+      requestBody:
+        description: A JSON object containing values provided by user to login
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                  description: User email or phone no.
+                password:
+                  type: string
+      responses:
+        '200':
+          description: >
+            Login success
+            A JWT token is returned in a cookie named 'token'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          $ref: '#/components/schemas/NotFoundError'
+        '500':
+          $ref: '#/components/schemas/UnexpectedError'
+
+  /logout:
+    get:
+      description: Allows user to logout
+      responses:
+        '200':
+          description: >
+            Logout success
+            Cookie value is set to null upon successful logout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        '500':
+          $ref: '#/components/schemas/UnexpectedError'

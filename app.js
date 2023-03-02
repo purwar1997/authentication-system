@@ -6,12 +6,14 @@ import fs from 'fs';
 import router from './routes/routes.js';
 
 const app = express();
+
 const data = fs.readFileSync('./swagger.yaml', { encoding: 'utf-8' });
 const swaggerDocument = YAML.parse(data);
+const options = { customCss: '.swagger-ui .topbar { display: none }' };
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(router);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, options));
 
 export default app;
