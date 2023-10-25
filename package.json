@@ -1,7 +1,7 @@
 {
-  "name": "authentication-system",
+  "name": "auth-system",
   "version": "1.0.0",
-  "description": "Authentication system created using express.js",
+  "description": "Authentication system built with node.js and mongodb",
   "main": "index.js",
   "type": "module",
   "scripts": {
